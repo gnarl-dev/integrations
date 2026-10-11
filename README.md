@@ -12,8 +12,9 @@ adapter needs an embedding model.
 | `llama-index-memory-gnarl` (PyPI) | [`python/llama-index-memory-gnarl`](python/llama-index-memory-gnarl) | LlamaIndex | `GnarlMemoryBlock` (`Memory` block), `GnarlRetriever` |
 | `gnarl-ai-sdk` (npm) | [`typescript/gnarl-ai-sdk`](typescript/gnarl-ai-sdk) | Vercel AI SDK 7 | `gnarlMemoryTools`, `gnarlMemoryMiddleware` |
 
-Point any of them at a node with `GNARL_URL` (the Gnarly desktop node listens
-on `http://127.0.0.1:43300`).
+With no address configured, each finds the node on this machine (the clients
+read `$GNARL_URL`, else the endpoint the local node recorded, else the Gnarly
+app's `http://127.0.0.1:43300`).
 
 ## Why one repository
 
@@ -30,13 +31,14 @@ python/langchain-gnarl/            pyproject (hatchling), src/langchain_gnarl, t
 python/llama-index-memory-gnarl/   pyproject (hatchling), src/llama_index/memory/gnarl, tests/{unit,integration}
 typescript/gnarl-ai-sdk/           package.json (tsup, ESM), src, test/{unit,integration}
 scripts/ci-node.sh                 starts a released node for CI integration tests
-.github/workflows/                 python.yml, typescript.yml
+.github/workflows/                 python.yml, typescript.yml, release-<package>.yml
 ```
 
 ## Tests
 
 Unit tests use a stand-in client and need nothing running. Integration tests
-run against a real node at `$GNARL_URL` and skip when it is unset or
+run against a real node at `$GNARL_URL` — never the discovered local node, so
+they cannot write into your own memory — and skip when it is unset or
 unreachable; CI starts a released node and fails if they skipped.
 
 ```bash
@@ -46,5 +48,18 @@ python3 -m venv .venv
 (cd python/llama-index-memory-gnarl && ../../.venv/bin/pytest)
 (cd typescript/gnarl-ai-sdk && npm install && npm test && npm run test:integration)
 ```
+
+## Releasing
+
+Each package releases on its own tag, and its release workflow builds only
+that package, after checking the tag matches the version in its manifest:
+
+| Tag | Workflow | Publishes to |
+| --- | --- | --- |
+| `langchain-gnarl-v<version>` | `release-langchain-gnarl.yml` | PyPI, trusted publishing, environment `pypi` |
+| `llama-index-memory-gnarl-v<version>` | `release-llama-index-memory-gnarl.yml` | PyPI, trusted publishing, environment `pypi` |
+| `gnarl-ai-sdk-v<version>` | `release-gnarl-ai-sdk.yml` | npm with provenance, environment `npm` |
+
+Bump the version and the package's `CHANGELOG.md`, merge, then push the tag.
 
 Licensed under Apache-2.0.

@@ -1,0 +1,53 @@
+# Publishes gnarl-ai-sdk to npm when a `gnarl-ai-sdk-v*` tag is pushed, e.g.
+# `gnarl-ai-sdk-v0.1.0`, with provenance. Builds only typescript/gnarl-ai-sdk.
+#
+# Steady state is trusted publishing (OIDC): the package's npm settings name
+# gnarl-dev/integrations, release-gnarl-ai-sdk.yml and environment `npm` as its
+# trusted publisher, and no token exists anywhere.
+#
+# npm can only attach a trusted publisher to a package that already exists, so
+# the FIRST publish needs a token: put a granular automation token in the `npm`
+# environment's NPM_TOKEN secret, publish once, configure the trusted publisher,
+# set "disallow tokens", and delete the secret. With the secret unset the token
+# below is empty and npm authenticates through OIDC.
+name: release gnarl-ai-sdk
+
+on:
+  push:
+    tags: ["gnarl-ai-sdk-v*"]
+
+permissions: {}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: typescript/gnarl-ai-sdk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: typescript/gnarl-ai-sdk/package-lock.json
+      # Trusted publishing needs npm 11.5 or later.
+      - run: npm install -g npm@11.6.2
+      - name: The tag names the version being published
+        run: |
+          want="${GITHUB_REF_NAME#gnarl-ai-sdk-v}"
+          have=$(node -p "require('./package.json').version")
+          if [ "$want" != "$have" ]; then
+            echo "::error::tag $GITHUB_REF_NAME but package.json says $have"
+            exit 1
+          fi
+      - run: npm ci
+      # prepublishOnly runs lint, typecheck, unit tests and the build.
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
