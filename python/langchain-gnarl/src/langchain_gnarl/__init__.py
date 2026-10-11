@@ -5,7 +5,8 @@
 - :class:`GnarlRetriever` — LangChain retriever over semantic recall.
 
 All three are thin wrappers over the published ``gnarl-client``; point them at
-a node with ``$GNARL_URL`` or pass a :class:`gnarl.Client`.
+a node with ``$GNARL_URL`` or pass a :class:`gnarl.Client`; with neither,
+the client finds the node on this machine.
 """
 
 from ._gnarl import IncompleteRecall, RecallResult

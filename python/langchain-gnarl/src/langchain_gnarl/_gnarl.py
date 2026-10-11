@@ -3,8 +3,9 @@
 Everything here goes through the published ``gnarl-client``; nothing speaks
 HTTP itself. The helpers exist for the handful of places where a framework
 needs something the memory API does not hand over directly — a lookup by key,
-a delete, a listing — and for two behaviours of the node that an adapter has
-to absorb rather than pass on to its caller (see :func:`recall`).
+a delete, a listing — and for behaviours of the node an adapter has to absorb
+rather than pass on to its caller (see :func:`wildcard_prefix` and
+:class:`Tombstones`).
 """
 
 from __future__ import annotations
@@ -18,7 +19,6 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-import pydantic
 from gnarl import AsyncClient, Client, Hit, NotFound, Query
 from gnarl import RecallResult as _GnarlRecall
 from gnarl import query as q
@@ -60,9 +60,11 @@ def check_namespace(namespace: str) -> str:
 
 
 class Clients:
-    """A sync and an async client, either supplied or built from ``$GNARL_URL``.
+    """A sync and an async client, either supplied or built on first use.
 
-    Built lazily, so constructing an adapter never needs a reachable node and an
+    A client built here finds the node itself: ``$GNARL_URL``, else the endpoint
+    the node on this machine recorded, else the Gnarly app's default. Built
+    lazily, so constructing an adapter never needs a reachable node and an
     adapter used only synchronously never opens an async connection pool.
     """
 
@@ -129,32 +131,13 @@ def _to_result(resp: _GnarlRecall) -> RecallResult:
 
 
 def recall(client: Client, query: str, **fields: Any) -> RecallResult:
-    """``client.memory.recall`` that treats a never-written namespace as empty.
-
-    The node answers a recall over a namespace that has no index yet with an
-    empty body that omits ``embedder``, which gnarl-client 0.2.0 declares
-    required, so the client raises a validation error on what is really "no
-    memories yet". Only that case is absorbed: the error is re-raised unless the
-    namespace's index really is absent.
-    """
-    try:
-        return _to_result(client.memory.recall(query, **fields))
-    except pydantic.ValidationError:
-        ns = fields.get("namespace")
-        if ns and not client.index_exists(ns):
-            return RecallResult(memories=[], namespace=ns)
-        raise
+    """``client.memory.recall``, with completeness carried alongside."""
+    return _to_result(client.memory.recall(query, **fields))
 
 
 async def arecall(client: AsyncClient, query: str, **fields: Any) -> RecallResult:
     """:func:`recall`, awaited."""
-    try:
-        return _to_result(await client.memory.recall(query, **fields))
-    except pydantic.ValidationError:
-        ns = fields.get("namespace")
-        if ns and not await client.index_exists(ns):
-            return RecallResult(memories=[], namespace=ns)
-        raise
+    return _to_result(await client.memory.recall(query, **fields))
 
 
 def search_hits(client: Client, index: str, query: Query, **kw: Any) -> list[Hit]:

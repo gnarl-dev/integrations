@@ -53,7 +53,8 @@ class GnarlMemoryBlock(BaseMemoryBlock[str]):
 
     name: str = Field(default="GnarlMemory", description="The name of the memory block.")
     client: AsyncClient | None = Field(
-        default=None, description="Async Gnarl client; built from $GNARL_URL when omitted."
+        default=None,
+        description="Async Gnarl client; when omitted, one that finds the node itself.",
     )
     namespace: str | None = Field(default=None, description="Gnarl memory namespace.")
     space: str | None = Field(

@@ -26,14 +26,17 @@ classifiers = [
 # Floors are the versions this package was built and verified against; ceilings
 # are the next major, whose base classes may change shape.
 dependencies = [
-  "gnarl-client>=0.2.0,<0.3",
+  "gnarl-client>=0.2.1,<0.3",
   "langchain-core>=1.6.9,<2",
   "langgraph-checkpoint>=4.2.0,<5",
   "pydantic>=2.7,<3",
 ]
 
 [project.urls]
-Homepage = "https://gnarl.dev"
+Homepage = "https://github.com/gnarl-dev/integrations"
+Source = "https://github.com/gnarl-dev/integrations/tree/main/python/langchain-gnarl"
+Issues = "https://github.com/gnarl-dev/integrations/issues"
+Changelog = "https://github.com/gnarl-dev/integrations/blob/main/python/langchain-gnarl/CHANGELOG.md"
 Documentation = "https://gnarl.dev/docs"
 
 [project.optional-dependencies]
@@ -66,12 +69,6 @@ select = ["E", "F", "I", "UP", "B", "W"]
 python_version = "3.10"
 strict = true
 files = ["src/langchain_gnarl"]
-
-# gnarl-client 0.2.0 is fully annotated but ships no py.typed marker, so mypy
-# would otherwise treat every gnarl type as Any.
-[[tool.mypy.overrides]]
-module = ["gnarl", "gnarl.*"]
-follow_untyped_imports = true
 
 [tool.pyright]
 include = ["src"]

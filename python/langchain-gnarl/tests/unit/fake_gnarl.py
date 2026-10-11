@@ -4,7 +4,8 @@ It implements only the calls the adapters make, and answers them in the wire
 shapes the published client returns (its own pydantic models), including the
 node behaviours the adapters must absorb:
 
-- a recall over a never-written namespace fails the client's validation;
+- a recall over a never-written namespace answers with no ``embedder``
+  (what released nodes before rc30 send; gnarl-client 0.2.1 accepts it);
 - with ``delete_lag=True``, a deleted document stays searchable (the node
   hides a delete only at its next refresh).
 """
@@ -57,8 +58,8 @@ class _Memory:
         self._f.calls.append(("recall", query, kw))
         ns = kw.get("namespace") or "default"
         if ns not in self._f.indexes:
-            # What the node sends for a namespace with no index: no `embedder`,
-            # which the client's model requires.
+            # What a pre-rc30 node sends for a namespace with no index: no
+            # `embedder`. The adapters must not trip on it.
             return RecallResult.model_validate({"namespace": ns, "count": 0, "memories": []})
         qt = _tokens(query)
         scored = []
@@ -106,9 +107,6 @@ class FakeGnarl(Client):
             (i, d) for i, d in self.indexes.get(ns, {}).items()
             if self.delete_lag or i not in self.deleted
         ]
-
-    def index_exists(self, name: str) -> bool:
-        return name in self.indexes
 
     def search(self, index: str, query: Any = None, *, size: int | None = None,
                from_: int | None = None, **_: Any) -> SearchResult:
@@ -180,9 +178,6 @@ class AsyncFakeGnarl(AsyncClient):
     def __init__(self, sync: FakeGnarl) -> None:
         self.sync = sync
         self.memory = _AsyncMemory(sync)  # type: ignore[assignment]
-
-    async def index_exists(self, name: str) -> bool:
-        return self.sync.index_exists(name)
 
     async def search(self, *a: Any, **kw: Any) -> SearchResult:
         return self.sync.search(*a, **kw)

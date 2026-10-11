@@ -41,7 +41,7 @@ class GnarlRetriever(BaseRetriever):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     client: Client | None = None
-    """Sync client; built from ``$GNARL_URL`` when omitted."""
+    """Sync client; when omitted, one that finds the node itself."""
     async_client: AsyncClient | None = None
     """Async client for ``ainvoke``; without one, LangChain runs the sync path
     in an executor."""

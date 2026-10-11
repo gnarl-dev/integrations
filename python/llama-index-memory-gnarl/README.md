@@ -7,8 +7,11 @@ there is no embedding model to configure.
 
 ```bash
 pip install llama-index-memory-gnarl
-export GNARL_URL=http://127.0.0.1:43300   # the Gnarly desktop node, or any node
 ```
+
+With no address configured, the client finds the node itself: `$GNARL_URL`,
+else the endpoint the node on this machine recorded, else the Gnarly app's
+`http://127.0.0.1:43300`. Pass a client to point anywhere else.
 
 ```python
 from llama_index.core.memory import Memory
@@ -53,7 +56,7 @@ A `BaseRetriever` returning `NodeWithScore`s whose metadata carries `score`,
 pip install -e '.[dev]'
 ruff check . && mypy && pyright
 pytest tests/unit
-GNARL_URL=http://127.0.0.1:43300 pytest tests/integration   # skipped without a node
+GNARL_URL=http://127.0.0.1:<port> pytest tests/integration   # a throwaway test node; skipped when unset
 ```
 
 Licensed under Apache-2.0.

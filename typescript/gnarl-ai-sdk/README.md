@@ -8,15 +8,18 @@ so there is no embedding model to configure.
 
 ```bash
 npm install gnarl-ai-sdk gnarl-client ai zod
-export GNARL_URL=http://127.0.0.1:43300   # the Gnarly desktop node, or any node
 ```
+
+With no address configured, the client finds the node itself: `$GNARL_URL`,
+else the endpoint the node on this machine recorded, else the Gnarly app's
+`http://127.0.0.1:43300`. Pass a client to point anywhere else.
 
 ```ts
 import { generateText, stepCountIs, wrapLanguageModel } from "ai";
 import { GnarlClient } from "gnarl-client";
 import { gnarlMemoryMiddleware, gnarlMemoryTools } from "gnarl-ai-sdk";
 
-const client = new GnarlClient();                     // $GNARL_URL
+const client = new GnarlClient();                     // finds the local node
 const model = wrapLanguageModel({ model: yourModel, middleware: gnarlMemoryMiddleware({ client, user: "alice" }) });
 const { text } = await generateText({
   model,
@@ -66,7 +69,7 @@ Requires Node 22+ and ESM, as `ai` 7 does.
 ```bash
 npm install
 npm run lint && npm run typecheck && npm test && npm run build
-GNARL_URL=http://127.0.0.1:43300 npm run test:integration   # skipped without a node
+GNARL_URL=http://127.0.0.1:<port> npm run test:integration   # a throwaway test node; skipped when unset
 ```
 
 The tests use the AI SDK's `MockLanguageModelV4` (`ai/test`); no LLM is called.

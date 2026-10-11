@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-import pydantic
 from gnarl import AsyncClient, Client
 from gnarl import RecallResult as _GnarlRecall
 
@@ -49,28 +48,10 @@ def _to_result(resp: _GnarlRecall) -> RecallResult:
 
 
 def recall(client: Client, query: str, **fields: Any) -> RecallResult:
-    """``client.memory.recall``, reading a never-written namespace as empty.
-
-    The node answers a recall over a namespace with no index yet with a body
-    that omits ``embedder``, which gnarl-client 0.2.0 requires, so the client
-    raises a validation error on what is really "no memories yet". Only that
-    case is absorbed; any other validation error is re-raised.
-    """
-    try:
-        return _to_result(client.memory.recall(query, **fields))
-    except pydantic.ValidationError:
-        ns = fields.get("namespace")
-        if ns and not client.index_exists(ns):
-            return RecallResult(memories=[], namespace=ns)
-        raise
+    """``client.memory.recall``, with completeness carried alongside."""
+    return _to_result(client.memory.recall(query, **fields))
 
 
 async def arecall(client: AsyncClient, query: str, **fields: Any) -> RecallResult:
     """:func:`recall`, awaited."""
-    try:
-        return _to_result(await client.memory.recall(query, **fields))
-    except pydantic.ValidationError:
-        ns = fields.get("namespace")
-        if ns and not await client.index_exists(ns):
-            return RecallResult(memories=[], namespace=ns)
-        raise
+    return _to_result(await client.memory.recall(query, **fields))

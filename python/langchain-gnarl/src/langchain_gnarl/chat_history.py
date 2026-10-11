@@ -46,7 +46,8 @@ class GnarlChatMessageHistory(BaseChatMessageHistory):
     """The turns of one conversation, kept as Gnarl memories.
 
     :param session_id: the conversation. Stored as each memory's ``session``.
-    :param client: a :class:`gnarl.Client`; from ``$GNARL_URL`` when omitted.
+    :param client: a :class:`gnarl.Client`; when omitted, one that finds the
+        node itself.
     :param async_client: a :class:`gnarl.AsyncClient` for the ``a*`` methods.
         Without one, but with ``client``, they run the sync client in a thread.
     :param namespace: the Gnarl memory namespace (default ``langchain-chat``).

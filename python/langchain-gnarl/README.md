@@ -8,8 +8,11 @@ embedding, so there is no embedding model to configure.
 
 ```bash
 pip install langchain-gnarl
-export GNARL_URL=http://127.0.0.1:43300   # the Gnarly desktop node, or any node
 ```
+
+With no address configured, the client finds the node itself: `$GNARL_URL`,
+else the endpoint the node on this machine recorded, else the Gnarly app's
+`http://127.0.0.1:43300`. Pass a client to point anywhere else.
 
 ```python
 from langchain_gnarl import GnarlStore, GnarlChatMessageHistory, GnarlRetriever
@@ -76,7 +79,8 @@ may still exist. `require_complete=True` raises `IncompleteRecall` instead.
 ## Clients
 
 Every class takes an optional `gnarl.Client` and `gnarl.AsyncClient`. With
-neither, they are built from `$GNARL_URL` (and `$GNARL_TOKEN`) on first use.
+neither, one is built on first use and finds the node as described above
+(`$GNARL_TOKEN` supplies a token).
 With only a sync client, async methods run it in a worker thread.
 
 ## Development
@@ -85,7 +89,7 @@ With only a sync client, async methods run it in a worker thread.
 pip install -e '.[dev]'
 ruff check . && mypy && pyright
 pytest tests/unit
-GNARL_URL=http://127.0.0.1:43300 pytest tests/integration   # skipped without a node
+GNARL_URL=http://127.0.0.1:<port> pytest tests/integration   # a throwaway test node; skipped when unset
 ```
 
 Licensed under Apache-2.0.

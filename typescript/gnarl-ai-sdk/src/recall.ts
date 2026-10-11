@@ -2,7 +2,11 @@ import { GnarlClient, type Memory, type RecallResponse } from "gnarl-client";
 
 /** Where memories live and whose they are. Fixed by the developer, never chosen by the model. */
 export interface GnarlMemoryScope {
-  /** A `GnarlClient`. Default: `new GnarlClient()`, which reads `$GNARL_URL` and `$GNARL_TOKEN`. */
+  /**
+   * A `GnarlClient`. Default: `new GnarlClient()`, which finds the node itself —
+   * `$GNARL_URL`, else the endpoint the node on this machine recorded, else
+   * the Gnarly app's `http://127.0.0.1:43300`.
+   */
   client?: GnarlClient;
   /** Gnarl memory namespace. With neither this nor `space`, the node's default personal space. */
   namespace?: string;

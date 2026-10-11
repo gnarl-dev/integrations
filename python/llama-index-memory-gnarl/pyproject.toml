@@ -26,13 +26,15 @@ classifiers = [
 # Floors are the versions verified against; llama-index-core breaks its API
 # between 0.x minors, so the ceiling is the next one.
 dependencies = [
-  "gnarl-client>=0.2.0,<0.3",
+  "gnarl-client>=0.2.1,<0.3",
   "llama-index-core>=0.14.25,<0.15",
-  "pydantic>=2.7,<3",
 ]
 
 [project.urls]
-Homepage = "https://gnarl.dev"
+Homepage = "https://github.com/gnarl-dev/integrations"
+Source = "https://github.com/gnarl-dev/integrations/tree/main/python/llama-index-memory-gnarl"
+Issues = "https://github.com/gnarl-dev/integrations/issues"
+Changelog = "https://github.com/gnarl-dev/integrations/blob/main/python/llama-index-memory-gnarl/CHANGELOG.md"
 Documentation = "https://gnarl.dev/docs"
 
 [project.optional-dependencies]
@@ -76,11 +78,6 @@ files = ["src/llama_index/memory/gnarl"]
 explicit_package_bases = true
 mypy_path = "src"
 namespace_packages = true
-
-# gnarl-client 0.2.0 is fully annotated but ships no py.typed marker.
-[[tool.mypy.overrides]]
-module = ["gnarl", "gnarl.*"]
-follow_untyped_imports = true
 
 [tool.pyright]
 include = ["src"]

@@ -2,7 +2,7 @@
 
     from langchain_gnarl import GnarlStore
 
-    store = GnarlStore()                      # $GNARL_URL
+    store = GnarlStore()                      # finds the node on this machine
     store.put(("memories", "alice"), "food", {"text": "Alice is vegetarian"})
     store.search(("memories", "alice"), query="what does alice eat?")
 
@@ -224,11 +224,12 @@ def _ns_matches(ns: tuple[str, ...], cond: Any) -> bool:
 class GnarlStore(BaseStore):
     """A LangGraph ``BaseStore`` whose items are Gnarl memories.
 
-    :param client: a :class:`gnarl.Client`; built from ``$GNARL_URL`` when
-        omitted and first needed.
+    :param client: a :class:`gnarl.Client`; when omitted, one built on first
+        use finds the node (``$GNARL_URL``, else the local node's recorded
+        endpoint, else ``http://127.0.0.1:43300``).
     :param async_client: a :class:`gnarl.AsyncClient` for ``abatch`` and the
-        ``a*`` methods. When neither it nor ``$GNARL_URL`` is available but
-        ``client`` is, async calls run the sync client in a worker thread.
+        ``a*`` methods. When it is omitted but ``client`` is given, async
+        calls run the sync client in a worker thread.
     :param namespace: the Gnarl memory namespace that holds every item. Must
         already be a valid index name (``[a-z0-9][a-z0-9_-]*``, at most 64).
     :param index_fields: which top-level value keys to embed; ``"$"`` is the
