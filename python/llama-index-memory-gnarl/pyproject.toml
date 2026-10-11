@@ -1,0 +1,90 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "llama-index-memory-gnarl"
+version = "0.1.0"
+description = "LlamaIndex memory block and retriever for Gnarl agent memory"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Lucenia" }]
+keywords = ["llama-index", "memory", "agents", "gnarl", "vector-search"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Typing :: Typed",
+]
+# Floors are the versions verified against; llama-index-core breaks its API
+# between 0.x minors, so the ceiling is the next one.
+dependencies = [
+  "gnarl-client>=0.2.0,<0.3",
+  "llama-index-core>=0.14.25,<0.15",
+  "pydantic>=2.7,<3",
+]
+
+[project.urls]
+Homepage = "https://gnarl.dev"
+Documentation = "https://gnarl.dev/docs"
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "pytest-asyncio==1.4.0",
+  "mypy==2.4.0",
+  "pyright==1.1.414",
+  "ruff==0.17.0",
+]
+
+[tool.hatch.build.targets.wheel]
+# `llama_index` and `llama_index.memory` are namespace packages shared with
+# llama-index-core and every other integration: ship only our leaf.
+packages = ["src/llama_index"]
+only-include = ["src/llama_index/memory/gnarl"]
+sources = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = ["integration: needs a live node at $GNARL_URL (skipped otherwise)"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "W"]
+
+[tool.ruff.lint.isort]
+# Without this, ruff takes `gnarl` (the client) for this package's own
+# `llama_index/memory/gnarl` directory.
+known-third-party = ["gnarl"]
+known-first-party = ["llama_index.memory.gnarl"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["src/llama_index/memory/gnarl"]
+explicit_package_bases = true
+mypy_path = "src"
+namespace_packages = true
+
+# gnarl-client 0.2.0 is fully annotated but ships no py.typed marker.
+[[tool.mypy.overrides]]
+module = ["gnarl", "gnarl.*"]
+follow_untyped_imports = true
+
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.10"
+typeCheckingMode = "standard"
+venvPath = "../.."
+venv = ".venv"
