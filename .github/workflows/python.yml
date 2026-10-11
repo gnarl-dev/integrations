@@ -1,0 +1,66 @@
+name: python
+
+on:
+  push:
+    branches: [main]
+    paths: ["python/**", ".github/workflows/python.yml", "scripts/ci-node.sh"]
+  pull_request:
+    paths: ["python/**", ".github/workflows/python.yml", "scripts/ci-node.sh"]
+  workflow_dispatch:
+
+jobs:
+  unit:
+    name: ${{ matrix.package }} (py${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [langchain-gnarl, llama-index-memory-gnarl]
+        python: ["3.10", "3.13"]
+    defaults:
+      run:
+        working-directory: python/${{ matrix.package }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e '.[dev]'
+      - run: ruff check .
+      - run: mypy
+      - run: pyright
+      - run: pytest tests/unit -v
+
+  integration:
+    name: ${{ matrix.package }} against a released node
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [langchain-gnarl, llama-index-memory-gnarl]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Start a node
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci-node.sh
+      - working-directory: python/${{ matrix.package }}
+        run: |
+          pip install -e '.[dev]'
+          pytest tests/integration -v -rs --junitxml=integration.xml
+      - name: The integration tests actually ran
+        # Without a node they SKIP, and a green run that skipped everything
+        # proves nothing.
+        if: always()
+        working-directory: python/${{ matrix.package }}
+        run: |
+          python - <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          s = ET.parse("integration.xml").getroot().find("testsuite")
+          ran = int(s.get("tests")) - int(s.get("skipped"))
+          print(f"{ran} integration tests executed")
+          sys.exit(0 if ran > 0 and int(s.get("skipped")) == 0 else "integration tests skipped")
+          PY

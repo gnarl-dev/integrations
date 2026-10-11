@@ -1,0 +1,37 @@
+name: typescript
+
+on:
+  push:
+    branches: [main]
+    paths: ["typescript/**", ".github/workflows/typescript.yml", "scripts/ci-node.sh"]
+  pull_request:
+    paths: ["typescript/**", ".github/workflows/typescript.yml", "scripts/ci-node.sh"]
+  workflow_dispatch:
+
+jobs:
+  gnarl-ai-sdk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: typescript/gnarl-ai-sdk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: typescript/gnarl-ai-sdk/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Start a node
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci-node.sh
+      - name: Integration (fails if it skipped)
+        run: |
+          npx vitest run test/integration --reporter=json --outputFile=integration.json
+          node -e 'const r=require("./integration.json"); const ran=r.numPassedTests+r.numFailedTests; console.log(ran+" integration tests executed"); if(ran===0||r.numPendingTests>0) process.exit(1)'
